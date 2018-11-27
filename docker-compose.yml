@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:10.5
+    restart: always
+    volumes:
+      - /data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=ExamplePassword1234$
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud_user
+    networks:
+      - nextcloud
+
+  app:
+    image: macgeek312/nextcloud-fpm:latest
+    restart: always
+    volumes:
+      - /data/nextcloud:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PASSWORD=ExamplePassword1234$
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud_user
+    depends_on:
+      - db
+    networks:
+      - nextcloud
+
+  web:
+    image: macgeek312/nextcloud-nginx:latest
+    restart: always
+    ports:
+      - 9090:80
+    volumes:
+      - /data/nextcloud:/var/www/html:ro
+    depends_on:
+      - app
+    networks:
+      - nextcloud
+      - default
+
+  redis:
+    image: library/redis:latest
+    restart: always
+    depends_on:
+      - app
+    networks:
+      - nextcloud
+
+networks:
+  nextcloud:
